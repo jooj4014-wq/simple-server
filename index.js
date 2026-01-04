@@ -3,23 +3,31 @@ const http = require("http");
 const PORT = process.env.PORT || 3000;
 
 const server = http.createServer((req, res) => {
-  // السماح لـ n8n
+
+  // السماح بالطلبات من n8n
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  // preflight
   if (req.method === "OPTIONS") {
     res.writeHead(200);
     return res.end();
   }
 
-  // اختبار السيرفر
+  // الصفحة الرئيسية
   if (req.method === "GET" && req.url === "/") {
     res.writeHead(200, { "Content-Type": "text/plain" });
-    return res.end("Server is running ✅");
+    return res.end("Server is running 🚀");
   }
 
-  // API إنشاء فيديو (اختبار فقط)
+  // API test
+  if (req.method === "GET" && req.url === "/api/test") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ status: "ok" }));
+  }
+
+  // إنشاء فيديو (استقبال من n8n)
   if (req.method === "POST" && req.url === "/api/create-video") {
     let body = "";
 
@@ -28,7 +36,7 @@ const server = http.createServer((req, res) => {
     });
 
     req.on("end", () => {
-      let data;
+      let data = {};
 
       try {
         data = JSON.parse(body);
@@ -37,19 +45,22 @@ const server = http.createServer((req, res) => {
         return res.end(JSON.stringify({ error: "Invalid JSON" }));
       }
 
-      // نرجع البيانات فقط (اختبار)
+      // رابط فيديو تجريبي (لاحقًا نستبدله بفيديو حقيقي)
+      const finalVideoUrl = "https://example.com/final-short.mp4";
+
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({
-        status: "success",
-        message: "Data received",
-        received: data
+        success: true,
+        message: "Video request received",
+        finalVideoUrl,
+        receivedData: data
       }));
     });
 
     return;
   }
 
-  // أي شيء آخر
+  // غير معروف
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Not Found");
 });
