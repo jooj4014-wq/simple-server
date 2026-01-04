@@ -6,10 +6,20 @@ const path = require("path");
 
 const PORT = process.env.PORT || 3000;
 
+function download(url, fileName, cb) {
+  const file = fs.createWriteStream(fileName);
+  https.get(url, response => {
+    response.pipe(file);
+    file.on("finish", () => {
+      file.close(cb);
+    });
+  });
+}
+
 const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 
   if (req.method === "OPTIONS") {
     res.writeHead(200);
@@ -26,23 +36,15 @@ const server = http.createServer((req, res) => {
     req.on("data", chunk => body += chunk);
     req.on("end", () => {
       const data = JSON.parse(body);
+
       const videoUrl = data.videoUrl;
+      const audioUrl = data.audioUrl;
 
-      const input = "input.mp4";
-      const output = "final.mp4";
-
-      // تحميل الفيديو
-      const file = fs.createWriteStream(input);
-      https.get(videoUrl, response => {
-        response.pipe(file);
-
-        file.on("finish", () => {
-          file.close();
-
-          // قص 30 ثانية
+      download(videoUrl, "video.mp4", () => {
+        download(audioUrl, "audio.mp3", () => {
           exec(
-            `ffmpeg -y -i ${input} -t 30 -vf "scale=1080:1920" ${output}`,
-            (err) => {
+            `ffmpeg -y -i video.mp4 -i audio.mp3 -shortest -vf "scale=1080:1920" final.mp4`,
+            err => {
               if (err) {
                 res.writeHead(500);
                 return res.end("FFmpeg error");
