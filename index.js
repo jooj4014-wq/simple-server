@@ -3,24 +3,20 @@ const http = require("http");
 const PORT = process.env.PORT || 3000;
 
 const server = http.createServer((req, res) => {
-
   // الصفحة الرئيسية
   if (req.method === "GET" && req.url === "/") {
     res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("Server is running 🚀");
+    return res.end("Server is running 🚀");
   }
 
   // اختبار API
-  else if (req.method === "GET" && req.url === "/api/test") {
+  if (req.method === "GET" && req.url === "/api/test") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({
-      status: "success",
-      message: "API is working ✅"
-    }));
+    return res.end(JSON.stringify({ status: "ok" }));
   }
 
-  // ✅ Endpoint إنشاء فيديو (POST)
-  else if (req.method === "POST" && req.url === "/api/create-video") {
+  // إنشاء فيديو (POST)
+  if (req.method === "POST" && req.url === "/api/create-video") {
     let body = "";
 
     req.on("data", chunk => {
@@ -36,13 +32,13 @@ const server = http.createServer((req, res) => {
         data
       }));
     });
+
+    return;
   }
 
-  // غير موجود
-  else {
-    res.writeHead(404);
-    res.end("Not Found");
-  }
+  // غير ذلك
+  res.writeHead(404);
+  res.end("Not Found");
 });
 
 server.listen(PORT, () => {
